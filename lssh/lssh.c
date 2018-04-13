@@ -70,6 +70,9 @@ int main(void)
     // How many command line args the user typed
     int args_count;
 
+    // background task hang up tracker
+    int noHang = 0;
+    
     // Shell loops forever (until we tell it to exit)
     while (1) {
         // Print a prompt
@@ -95,6 +98,31 @@ int main(void)
         // Exit the shell if args[0] is the built-in "exit" command
         if (strcmp(args[0], "exit") == 0) {
             break;
+        }
+
+        // change directory
+        else if (strcmp(args[0], "cd") == 0) {
+            char *homeDir = getenv("HOME");
+            char *dir = (args_count > 1) ? args[1] : homeDir;
+            // error is not printing if only cd is input in command line unsure where failing
+            if (chdir(dir) == -1) {
+                perror("chdir");
+            }
+
+            continue;
+        }
+
+        // background task handler
+        int fileOutput = 0;
+        char *output;
+        for (int i = 1; args[i] != NULL; i++) {
+            if (strcmp(args[i], ">") == 0) {
+                fileOutput = 1;
+                output = args[i + 1];
+            }
+            if (fileOutput == 1) {
+                args[i] = NULL;
+            }
         }
 
         #if DEBUG
