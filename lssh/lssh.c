@@ -3,6 +3,14 @@
 #include <unistd.h>
 #include <string.h>
 
+// Add includes for wait/types/stat and anything else encountered during research
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <signal.h>
+
 #define PROMPT "lambda-shell$ "
 
 #define MAX_TOKENS 100
@@ -101,6 +109,29 @@ int main(void)
         #endif
         
         /* Add your code for implementing the shell's logic here */
+        // fork to create child process
+        if (fork() == 0) {
+            // child created
+            if (fileOutput == 1) {
+                // O_WRONLY (open for writing only) and O_CREAT include <fcntl.h>
+                int fd = open(fileOutput, O_WRONLY | O_CREAT, 0777);
+                dup2(fd, 1);
+                close(fd);
+            }
+
+            // execvp() commands and exit
+            execvp(args[0], args);
+
+            exit(0);
+        } else {
+            // parent check for hangup added for background tasks stretch
+            if (noHang == 1) {
+                while (waitpid(-1, NULL, WNOHANG) > 0);
+            } else {
+                wait(NULL);
+            }
+        }
+        
         
     }
 
